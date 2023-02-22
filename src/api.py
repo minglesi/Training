@@ -6,7 +6,7 @@ import os
 db_pass = os.environ.get('DB_PASS')
 app = Flask(__name__, template_folder="template")
 pymysql.install_as_MySQLdb()
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://root:' + str(db_pass) + '@localhost:3307/demo'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://root:' + str(db_pass) + '@localhost:3306/demo'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['EXPLAIN_TEMPLATE_LOADING'] = True
 db = SQLAlchemy(app)
@@ -34,24 +34,43 @@ class Profession(db.Model):
         return '%s - %s hp, %s mana' % (self.profession, self.hp, self.mana)
 
 
-def validate_hero_profession(hero, profession):
+def validate_hero(hero):
     errors = {}
-    if hero.profession_id == '':
-        errors['profession'] = "Please fill out this field."
-    if len(hero.profession_id) > 20:
-        errors['profession'] = "Sorry the Profession name must be 20 characters max."
-    if hero.name == '':
+    if not hero.name or hero.name == '':
         errors['name'] = "Please fill out this field."
-    if len(hero.name) > 20:
-        errors['name'] = "Sorry the Hero name must be 20 characters max."
+    if len(hero.name) > 30:
+        errors['name'] = "Sorry the Hero name must be 30 characters max."
+    if not hero.race or hero.race == '':
+        errors['race'] = "Please select a race."
+    if hero.race not in ["Human", "Orc", "Elf", "Goblin"]:
+        errors['race'] = "Sorry the Hero race must be one of: Human, Orc, Elf or Goblin."
+    if not hero.profession_id:
+        errors['profession'] = "Please select a Profession."
+    if Profession.query.get(hero.profession_id) is None:
+        errors['profession'] = "Invalid Profession"
+    return errors
+
+
+def validate_profession(profession):
+    errors = {}
+    if not profession.profession or profession.profession == '':
+        errors['profession'] = "Please fill out this field."
+    if Profession.query.filter(Profession.profession == profession.profession).first() is not None:
+        errors['profession'] = "Profession already created."
+    if len(profession.profession) > 30:
+        errors['profession'] = "Sorry the Profession name must be 30 characters max."
     if profession.hp == '':
         errors['hp'] = "Please fill out this field."
-    if profession.hp > 500:
+    if not profession.hp.isdigit():
+        errors['hp'] = "Only numbers allowed"
+    elif int(profession.hp) > 500:
         errors['hp'] = "Ups! Max HP is 500"
     if profession.mana == '':
         errors['mana'] = "Please fill out this field."
-    if profession.mana > 300:
-        errors['mana'] = "Ups! Max Mana is 300"
+    if not profession.mana.isdigit():
+        errors['mana'] = "Only numbers allowed"
+    elif int(profession.mana) > 500:
+        errors['mana'] = "Ups! Max Mana is 500"
     return errors
 
 
@@ -82,10 +101,11 @@ def add_hero():
     race = request.form.get("race")
     profession_id = request.form.get("profession")
     new_hero = Hero(name=name, race=race, profession_id=profession_id)
-    #errors = validate_hero_profession(new_hero, new_profession)
-    #if errors:
-    #    return render_template('hero.html', name=Hero.name, profession=Hero.profession, hp=Profession.hp,
-    #                           mana=Profession.mana)
+    errors = validate_hero(new_hero)
+    if errors:
+        professions = Profession.query.all()
+        return render_template('hero.html', name=new_hero.name, profession_id=new_hero.profession_id,
+                               race=new_hero.race, professions=professions, errors=errors)
     try:
         db.session.add(new_hero)
         db.session.commit()
@@ -162,16 +182,20 @@ def add_profession():
     mana = request.form.get("new_profession_mana")
     hero_id = request.args.get("hero_id")
     new_profession = Profession(profession=profession, hp=hp, mana=mana)
-    professions = Profession.query.all()
-    professions_list = [profession.profession for profession in professions]
-    if profession not in professions_list:
+    errors = validate_profession(new_profession)
+    if errors:
+        professions = Profession.query.all()
+        return render_template('hero.html', professions=professions, errors=errors)
+    try:
         db.session.add(new_profession)
-    db.session.commit()
-    suffix = f"?profession_id={new_profession.profession_id}"
-    if hero_id:
-        return redirect(f"/hero/{hero_id}" + suffix)
-    else:
-        return redirect("/hero" + suffix)
+        db.session.commit()
+        suffix = f"?profession_id={new_profession.profession_id}"
+        if hero_id:
+            return redirect(f"/hero/{hero_id}" + suffix)
+        else:
+            return redirect("/hero" + suffix)
+    except Exception as e:
+        return f"There was an error adding data: {e}"
 
 
 @app.route('/professions', methods=['GET'])
@@ -181,7 +205,6 @@ def show_professions():
         return render_template('professions.html', professions=professions)
     except Exception as e:
         return render_template('error.html', error=e)
-
 
 
 if __name__ == '__main__':
