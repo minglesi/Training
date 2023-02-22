@@ -1,0 +1,130 @@
+{% extends "layout.html" %}
+
+{% set active_page = "hero" %}
+
+{% block title %} NEW HERO !! {% endblock %}
+
+{% block content %}
+
+
+<div class="container-body">
+    <div id="container-form">
+        {% if hero_id %}
+        <div id="jumbotron">
+            <form action="/heroes/{{hero_id}}" method="POST">
+
+
+                {% endif %}
+                <div class="jumbotron">
+                    <form action="/heroes/new" method="POST">
+
+                    <div class="row">
+                        <div class="form-group col-xl-6">
+                            <label for="name">Name</label>
+                            <input type="text" class="form-control {% if errors and errors.name %}is-invalid{% endif %}"
+                                   id="name" name="name" placeholder="your hero's name..." value="{{ name }}">
+                            {% if errors and errors.name %}
+                            <div class="invalid-feedback">{{ errors.name }}</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="form-group col-xl-6">
+                            <label for="race">Race</label>
+                            <select class="custom-select" name="race">
+                                <option value="">Select a race</option>
+                                <option value="Human">Human</option>
+                                <option value="Orc">Orc</option>
+                                <option value="Elf">Elf</option>
+                                <option value="Goblin">Goblin</option>
+
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="form-group col-xl-6">
+                            <label for="profession">Profession</label>
+                            <select class="custom-select" name="profession">
+                                <option value="">Select a profession</option>
+                                {% for profession in professions %}
+                                <option name="profession" id="profession" value="{{ profession.profession_id }}">{{
+                                    profession }}
+                                </option>
+                                {% endfor %}
+
+                            </select>
+
+                            </br>
+                            {% if errors and errors.profession %}
+                            <div class="invalid-feedback" id="profession-feedback">{{ errors.profession }}</div>
+                            {% endif %}
+
+                            <!-- Button trigger modal -->
+                            <button type="button" class="btn btn-secondary btn-sm float-right" id="create-profession-btn"
+                                    data-toggle="modal" data-target="#exampleModal">Create new
+                            </button>
+                            <!-- Modal -->
+                            <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel"
+                                 aria-hidden="true">
+                                <div class="modal-dialog">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <h5 class="modal-title" id="exampleModalLabel">New Profession</h5>
+                                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                                <span aria-hidden="true">&times;</span></button>
+                                        </div>
+                                        <div class="modal-body">
+                                            <label for="new_profession">Choose a name for your new profession: </label>
+                                            <input type="text" class="form-control" id="new_profession" name="new_profession"
+                                                   placeholder="new profession name...">
+
+                                        </div>
+                                        <div class="modal-body">
+                                            <label for="new_profession_hp">Choose your amount of HP: </label>
+                                            <input type="text" class="form-control" id="new_profession_hp" name="new_profession_hp"
+                                                   placeholder="your HP...">
+
+                                        </div>
+                                        <div class="modal-body">
+                                            <label for="new_profession_mana">Choose your amount of Mana: </label>
+                                            <input type="text" class="form-control" id="new_profession_mana" name="new_profession_mana"
+                                                   placeholder="your Mana...">
+
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="button" class="btn btn-secondary" data-dismiss="modal">Close
+                                            </button>
+                                            <button type="submit" formaction="/profession" class="btn btn-primary">Add
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group col-xl-6 d-flex justify-content-center">
+                            <img class="profession-image" src="{{ url_for('static',filename='images/robocop-unicorn.jpg') }}" alt="Profession Image"/>
+                        </div>
+                    </div>
+
+
+                        {% if hero_id %}
+                        <button type="submit" class="btn btn-primary">Save</button>
+                        <a href="/heroes">
+                            <button type="button" id="close-btn" class="btn btn-primary">Cancel</button>
+                        </a>
+                        {% else %}
+                        <button type="submit" class="btn btn-primary">Submit</button>
+                        <a href="/heroes">
+                            <button type="button" id="close-btn" class="btn btn-primary">Back</button>
+                        </a>
+                        {% endif %}
+
+                    </form>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    {% endblock %}
+</div>

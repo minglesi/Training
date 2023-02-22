@@ -1,0 +1,16 @@
+header.header {
+    text-align: center;
+    padding: 1rem;
+    margin: 10px;
+    border: 3px solid #ce4f4f;
+    border-radius: 10px;
+}
+.profession-image {
+    width: 30%;
+    padding: 3px;
+    box-shadow: 10px 10px 5px 0px rgba(0,0,0,0.75);
+}
+
+
+
+/* box model html */

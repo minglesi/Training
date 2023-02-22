@@ -1,0 +1,19 @@
+{% extends "layout.html" %}
+
+{% block title %} MY HERO LIST AND CREATOR {% endblock %}
+
+{% block content %}
+
+<div class="container-body">
+  <div class="jumbotron">
+    <h1 class="display-4">About this Web API</h1><br>
+    <p class="lead">I made this web API as a project for my Dataart Trainee course. It's a simple application
+                    intended to perform CRUD operations, using as an excuse the creation of Heroes. Here you
+                    can create and store different Heroes in a database.</p>
+    <hr class="my-4">
+    <p>Remember when you where a kid dreaming about superheroes? Now you can create them!</p>
+    <a class="btn btn-primary btn-lg" href="/hero" role="button">New Hero</a>
+  </div>
+</div>
+
+{% endblock %}
