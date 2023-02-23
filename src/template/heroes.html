@@ -1,100 +1,106 @@
 {% extends "layout.html" %}
 
+{% set active_page = "heroes" %}
+
 {% block title %} MY HEROES LIST{% endblock %}
 
 {% block content %}
 
-    {% if heroes|length > 0 %}
+{% if heroes|length > 0 %}
 
-    <div class="container-body">
-        <div class="jumbotron">
-          <h1 class="display-4">My Heroes list</h1>
-          <table class="table">
-              <thead>
-                  <tr>
-                    <th>Name</th>
-                    <th>Profession</th>
-                    <th>Race</th>
-                    <th>Hp</th>
-                    <th>Mana</th>
-                  </tr>
-              </thead>
-              <tbody>
+<div class="container-body">
+  <div class="jumbotron">
+    <h1 class="display-4">My Heroes list</h1>
+    <table class="table">
+      <thead class="thead-dark">
+        <tr>
+          <th>Name</th>
+          <th>Profession</th>
+          <th>Race</th>
+          <th>Hp</th>
+          <th>Mana</th>
+          <th>Icon</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
 
-        {% for hero in heroes %}
+      {% for hero in heroes %}
 
-          <tr>
-            <td>{{ hero.name }}</td>
-            <td>{{ hero.profession.profession }}</td>
-            <td>{{ hero.race }}</td>
-            <td>{{ hero.profession.hp }}</td>
-            <td>{{ hero.profession.mana }}</td>
-            <td id="actions">
-                <a href="/hero/{{hero.hero_id}}"><i class="fas fa-edit"></i></a>
-                <a><i class="far fa-trash-alt" data-toggle="modal" data-target="#exampleModal{{hero.hero_id}}" ></i></a>
-                    <!-- Modal -->
-                    <div class="modal fade" id="exampleModal{{hero.hero_id}}" tabindex="-1" aria-labelledby="exampleModalLabel{{hero.hero_id}}" aria-hidden="true">
-                      <div class="modal-dialog">
-                        <div class="modal-content">
-                          <div class="modal-header">
-                            <h5 class="modal-title" id="exampleModalLabel{{hero.hero_id}}">Confirm action</h5>
-                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                              <span aria-hidden="true">&times;</span>
-                            </button>
-                          </div>
-                          <div class="modal-body">
-                            <p>If you delete {{ hero.name }}, it will be gone for good. Do you want to proceed?</p>
-                          </div>
-                          <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                            <a href="/hero/{{hero.hero_id}}/delete"><button class="btn btn-primary">Delete</button></a>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-
-                  </div>
+      <tr>
+        <td>{{ hero.name }}</td>
+        <td>{{ hero.profession.profession }}</td>
+        <td>{{ hero.race }}</td>
+        <td>{{ hero.profession.hp }}</td>
+        <td>{{ hero.profession.mana }}</td>
+        <td> <img class="profession-image-icon" src="data:image/png;base64,{{ hero.icon }}" alt="Profession Image"/></td>
+        <td id="actions">
+          <a href="/hero/{{hero.hero_id}}"><i class="fas fa-edit"></i></a>
+          <a><i class="far fa-trash-alt" data-toggle="modal" data-target="#exampleModal-{{hero.hero_id}}"></i></a>
+          <!-- Modal -->
+          <div class="modal fade" id="exampleModal-{{hero.hero_id}}" tabindex="-1"
+               aria-labelledby="exampleModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+              <div class="modal-content">
+                <div class="modal-header">
+                  <h5 class="modal-title" id="exampleModalLabel">Confirm action</h5>
+                  <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                  </button>
+                </div>
+                <div class="modal-body">
+                  <p>If you delete {{ hero.name }}, it will be gone for good. Do you want to proceed?</p>
+                </div>
+                <div class="modal-footer">
+                  <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                  <a href="/hero/{{hero.hero_id}}/delete">
+                    <button class="btn btn-primary">Delete</button>
+                  </a>
                 </div>
               </div>
             </div>
-            </td>
-          </tr>
+          </div>
+        </td>
+      </tr>
 
-        {% endfor %}
-        </tbody>
-      </table>
+      {% endfor %}
+      </tbody>
+    </table>
 
     <div class="jumbotron">
-        <a class="btn btn-primary btn-lg" href="/hero" role="button">New Hero</a>
-                    <!-- Button trigger modal -->
-        <button type="button" class="btn btn-danger btn-lg float-right" data-toggle="modal" data-target="#Modal2">Delete List</button>
+      <a class="btn btn-primary btn-lg" href="/hero" role="button">New Hero</a>
+      <!-- Button trigger modal -->
+      <button type="button" class="btn btn-danger btn-lg float-right" data-toggle="modal" data-target="#Modal2">Delete
+        List
+      </button>
 
-        <!-- Modal -->
-        <div class="modal fade" id="Modal2" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
-          <div class="modal-dialog">
-            <div class="modal-content">
-              <div class="modal-header">
-                <h5 class="modal-title" id="Modal2">Delete List</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                  <span aria-hidden="true">&times;</span>
-                </button>
-              </div>
-              <div class="modal-body">
-                <p>This action will DELETE your whole Heroes Collection. Are you sure you want to delete it?</p>
-              </div>
-              <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                <a href="/heroes/delete"><button type="submit" class="btn btn-danger">Delete</button></a>
-              </div>
+      <!-- Modal -->
+      <div class="modal fade" id="Modal1" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title" id="Modal2">Delete List</h5>
+              <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+              </button>
+            </div>
+            <div class="modal-body">
+              <p>This action will DELETE your whole Heroes Collection. Are you sure you want to delete it?</p>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+              <a href="/heroes/delete">
+                <button type="submit" class="btn btn-danger">Delete</button>
+              </a>
             </div>
           </div>
         </div>
-              </div>
-            </div>
-        </div>
+      </div>
+    </div>
+  </div>
+</div>
 
-    {% else %}
+{% else %}
 
 <div class="container-body">
   <div class="jumbotron">
@@ -105,6 +111,6 @@
   </div>
 </div>
 
-    {% endif %}
+{% endif %}
 
 {% endblock %}

@@ -1,5 +1,6 @@
 from flask import Flask, render_template, request, redirect
 from flask_sqlalchemy import SQLAlchemy
+from base64 import b64encode
 import pymysql
 import os
 
@@ -14,10 +15,11 @@ db = SQLAlchemy(app)
 
 class Hero(db.Model):
     hero_id = db.Column(db.Integer, primary_key=True, nullable=False)
-    name = db.Column(db.String(30), nullable=False)
+    name = db.Column(db.String(30), nullable=False, unique=True)
     race = db.Column(db.String(10), nullable=False)
     profession_id = db.Column(db.Integer, db.ForeignKey('profession.profession_id'), nullable=False)
     profession = db.relationship("Profession", back_populates="Hero")
+    icon = db.Column(db.Text, nullable=True)
 
     def __repr__(self):
         return '%s, %s' % (self.name, self.race)
@@ -34,19 +36,21 @@ class Profession(db.Model):
         return '%s - %s hp, %s mana' % (self.profession, self.hp, self.mana)
 
 
-def validate_hero(hero):
+def validate_hero(hero, update=False):
     errors = {}
     if not hero.name or hero.name == '':
         errors['name'] = "Please fill out this field."
     if len(hero.name) > 30:
         errors['name'] = "Sorry the Hero name must be 30 characters max."
+    if not update and Hero.query.filter(Hero.name == hero.name).first() is not None:
+        errors['name'] = "Name already in use, please choose another one."
     if not hero.race or hero.race == '':
         errors['race'] = "Please select a race."
-    if hero.race not in ["Human", "Orc", "Elf", "Goblin"]:
+    elif hero.race not in ["Human", "Orc", "Elf", "Goblin"]:
         errors['race'] = "Sorry the Hero race must be one of: Human, Orc, Elf or Goblin."
     if not hero.profession_id:
         errors['profession'] = "Please select a Profession."
-    if Profession.query.get(hero.profession_id) is None:
+    elif Profession.query.get(hero.profession_id) is None:
         errors['profession'] = "Invalid Profession"
     return errors
 
@@ -56,7 +60,7 @@ def validate_profession(profession):
     if not profession.profession or profession.profession == '':
         errors['profession'] = "Please fill out this field."
     if Profession.query.filter(Profession.profession == profession.profession).first() is not None:
-        errors['profession'] = "Profession already created."
+        errors['profession'] = "Could not create profession, name already exists."
     if len(profession.profession) > 30:
         errors['profession'] = "Sorry the Profession name must be 30 characters max."
     if profession.hp == '':
@@ -99,8 +103,11 @@ def hero():
 def add_hero():
     name = request.form.get("name")
     race = request.form.get("race")
+    icon = request.files['icon']
+    image = b64encode(icon.read()).decode('ascii')
     profession_id = request.form.get("profession")
-    new_hero = Hero(name=name, race=race, profession_id=profession_id)
+    new_hero = Hero(name=name, race=race, profession_id=profession_id, icon=image)
+
     errors = validate_hero(new_hero)
     if errors:
         professions = Profession.query.all()
@@ -121,13 +128,10 @@ def get_hero(hero_id):
         return redirect('/error')
     else:
         profession_id = request.args.get("profession_id")
-        if profession_id:
-            profession_id = int(profession_id)
-        else:
-            profession_id = hero.profession_id
+        profession_id = int(profession_id) if profession_id else hero.profession_id
         professions = Profession.query.all()
         return render_template('hero.html', hero_id=hero_id, name=hero.name, profession_id=profession_id,
-                               race=hero.race, professions=professions)
+                               race=hero.race, professions=professions, icon=hero.icon)
 
 
 @app.route('/hero/<int:hero_id>', methods=['POST'])
@@ -139,16 +143,28 @@ def update_hero(hero_id):
         hero.profession_id = request.form.get("profession")
         hero.name = request.form.get("name")
         hero.race = request.form.get("race")
-        #errors = validate_hero_profession(hero, profession)
+        icon = request.files['icon']
+        image = b64encode(icon.read()).decode('ascii')
+        hero.icon = image
+        errors = validate_hero(hero, update=True)
 
-        #if errors:
-        #    return render_template('hero.html', name=Hero.name, profession=Hero.profession, hp=Profession.hp,
-        #                           mana=Profession.mana)
+        if errors:
+            professions = Profession.query.all()
+            return render_template('hero.html', name=hero.name, profession_id=hero.profession_id, professions=professions,
+                                   race=hero.race, icon=hero.icon, errors=errors)
         try:
             db.session.commit()
             return redirect("/heroes")
         except Exception as e:
             return f"There was an error adding data: {e}"
+
+
+@app.route('/hero/<int:hero_id>/delete', methods=['GET', 'POST'])
+def delete_hero(hero_id):
+    hero = Hero.query.get(hero_id)
+    db.session.delete(hero)
+    db.session.commit()
+    return redirect("/heroes")
 
 
 @app.route('/heroes', methods=['GET'])
@@ -160,19 +176,11 @@ def show_heroes():
         return render_template('error.html', error=e)
 
 
-@app.route('/hero/<int:hero_id>/delete', methods=['GET', 'POST'])
-def delete_hero(hero_id):
-    hero = Hero.query.get(hero_id)                  ##cuándo elimino el heroe, que pasa con la profession? se elimina
-    db.session.delete(hero)                         ##solo por la relacion que hay entre hero_id y profession_id o no?
-    db.session.commit()
-    return redirect("/heroes")
-
-
 @app.route('/heroes/delete', methods=['GET', 'POST'])
 def delete_all_heroes():
     db.session.query(Hero).delete()
     db.session.commit()
-    return redirect("/hero")
+    return redirect("/heroes")
 
 
 @app.route('/profession', methods=['POST'])
@@ -184,8 +192,12 @@ def add_profession():
     new_profession = Profession(profession=profession, hp=hp, mana=mana)
     errors = validate_profession(new_profession)
     if errors:
-        professions = Profession.query.all()
-        return render_template('hero.html', professions=professions, errors=errors)
+        if hero_id:
+            return redirect(f"/hero/{hero_id}")
+        else:
+            professions = Profession.query.all()
+            return render_template('hero.html', profession=new_profession.profession, hp=new_profession.hp,
+                                   professions=professions, mana=new_profession.mana, errors=errors)
     try:
         db.session.add(new_profession)
         db.session.commit()
@@ -198,23 +210,5 @@ def add_profession():
         return f"There was an error adding data: {e}"
 
 
-@app.route('/professions', methods=['GET'])
-def show_professions():
-    try:
-        professions = list(Profession.query.all)
-        return render_template('professions.html', professions=professions)
-    except Exception as e:
-        return render_template('error.html', error=e)
-
-
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0')
-
-##/heroes GET
-##/hero GET/POST
-##/hero/{id} GET/POST/PATCH/DELETE
-
-##/professions GET
-##/profession GET/POST
-##/profession/{id} GET/POST/PATCH/DELETE
-

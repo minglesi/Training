@@ -11,10 +11,10 @@
     <div id="container-form">
         {% if hero_id %}
         <div class="jumbotron">
-            <form action="/hero/{{hero_id}}" method="POST">
+            <form enctype="multipart/form-data"  action="/hero/{{hero_id}}" method="POST">
         {% else %}
          <div class="jumbotron">
-            <form action="/hero" method="POST">
+            <form enctype="multipart/form-data" action="/hero" method="POST">
         {% endif %}
                 <div class="row">
                     <div class="form-group col-xl-6">
@@ -28,7 +28,7 @@
 
                     <div class="form-group col-xl-6">
                         <label for="race">Race</label>
-                        <select class="custom-select" name="race" id="race" required>
+                        <select class="custom-select {% if errors and errors.race %}is-invalid{% endif %}" name="race" id="race" required>
                             <option value="" selected disabled hidden>Select a race</option>
                             <option {% if race == "Human" %}selected{% endif %} value="Human">Human</option>
                             <option {% if race == "Orc" %}selected{% endif %} value="Orc">Orc</option>
@@ -36,13 +36,16 @@
                             <option {% if race == "Goblin" %}selected{% endif %} value="Goblin">Goblin</option>
 
                         </select>
+                        {% if errors and errors.race %}
+                        <div class="invalid-feedback">{{ errors.race }}</div>
+                        {% endif %}
                     </div>
                 </div>
 
                 <div class="row">
                     <div class="form-group col-xl-6">
                         <label for="profession">Profession</label>
-                        <select class="custom-select" name="profession" id="profession" required>
+                        <select class="custom-select {% if errors and errors.profession %}is-invalid{% endif %}" name="profession" id="profession" required>
                             <option value="" selected disabled hidden>Select a profession</option>
                             {% for profession in professions %}
                             <option {% if profession_id == profession.profession_id %}selected{% endif %} value="{{ profession.profession_id }}">
@@ -50,7 +53,6 @@
                             </option>
                             {% endfor %}
                         </select>
-
                         </br>
                         {% if errors and errors.profession %}
                         <div class="invalid-feedback" id="profession-feedback">{{ errors.profession }}</div>
@@ -62,9 +64,18 @@
                         </button>
                     </div>
 
-                    <div class="form-group col-xl-6 d-flex justify-content-center">
-                        <img class="profession-image" src="{{ url_for('static',filename='images/robocop-unicorn.jpg') }}" alt="Profession Image"/>
+                    <div class="form-group col-xl-6">
+                        <label>Hero Icon</label>
+                        <div class="input-group mb-3">
+                            <div class="custom-file">
+                                <input type="file" class="custom-file-input" id="inputGroupFile01" name="icon">
+                                <label class="custom-file-label" for="inputGroupFile01">Choose file</label>
+                            </div>
+                        </div>
                     </div>
+                    {% if icon %}
+                    <img class="profession-image" src="data:image/png;base64,{{ icon }}" alt="Profession Image"/>
+                    {% endif %}
                 </div>
 
                 <button type="submit" class="btn btn-primary">Save</button>
@@ -74,12 +85,13 @@
 
             </form>
         </div>
-    </div>
+            </form>
+        </div>
     <!-- Modal -->
     <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel"
          aria-hidden="true">
         <div class="modal-dialog">
-            <form action="/profession/{{hero_id}}" method="POST">
+            <form  action="/profession/{{hero_id}}" method="POST">
                 <div class="modal-content">
                     <div class="modal-header">
                         <h5 class="modal-title" id="exampleModalLabel">New Profession</h5>
@@ -116,3 +128,4 @@
     </div>
 </div>
 {% endblock %}
+</div>
